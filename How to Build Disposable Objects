@@ -1,0 +1,129 @@
+You know that it is not a good practice to use destructors to clean up your objects. You are not supposed to disrupt the garbage collection process either. The “System.Object” class has the “Finalize()” method. But in C#, you cannot override this method. You need to use the destructor instead.
+
+So how do we cleanup used objects or resources?
+
+
+1. Memory Management in C#
+
+In most cases, we are free from memory management. Just Let .NET runtime handle the allocation/release of a memory space.
+
+But in some cases (especially you use unmangaged resources), you need to clean up the objects as soon as possible after using it. The best example is the DB connection or the File access. You do not want to keep your precious DB connection open without using it.
+
+So you want to let the runtime know you have done with this object and remove it as soon as possible.
+
+The first option you can choose is to do it by yourself. In your DB connection class, you can provide the “Close()” method to clean up the connection and let a user of this class call the method specifically after using it. Good enough, but this approach can be cumbersome because users of the class need to know what to do specifically for each case.
+
+C# provides the better language construct to handle these kind of situations uniformly. You can create a disposable object. By using the “using” keyword, you can dispose any kind of object in the same fashion.
+
+Here are the steps you need to do:
+
+Implement the “IDisposable” interface
+override the “Dispose()” method
+Use the object inside the “using” block. As soon as the execution point exits from the using block, the object’s Dispose() method is called and the resources will be released.
+
+2. IDisposable Interface
+
+ 
+public interface IDisposable
+{
+  void Dispose();
+}
+
+
+The “IDisposable” interface is pretty simple. You only need to implement one method.
+ 
+public class MyResource : IDisposable
+{
+  public void Dispose()
+  {
+    Console.WriteLine("Your resource is released!");
+  }
+}
+
+3. Calling Dispose() Method
+
+You can call the “Dispose()” method directly after using the object.
+
+ 
+MyResource r = new MyResource();
+...
+r.Dispose();
+
+
+But what if any execption occurrs before the “r.Dispose()” is called? The resources you want to clean up might not have any chance to be cleaned. So it is a common practice to call the “Dispose()” method in the “finally” block.
+
+ 
+MyResource r = new MyResource();
+try
+{
+  ...
+}
+catch (Exception e)
+{
+  ...
+}
+finally
+{
+  r.Dispose();
+}
+By placing the “Dispose()” inside the “finally” block, we can make sure that the “Dispose()” method will be called in any situations.
+
+
+4. “using” Block
+
+If you think the “try/catch/finally” is too cumbersome and lengthy in your code, there’s a shortcut syntax.
+ 
+using(MyResource r = new MyResource())
+{
+  ...
+}
+The “using” keyword lets you declare the scope of the object. The object being used will automatically have its “Dispose()” method called once the using block has exited. Moreover, the “Dispose()” method will be called even when an exception occurs inside the block. The complier creates the try/finally block for you and puts the “Dispose()” call in the finally block.
+
+
+5. The Disposable Pattern
+
+The disposable pattern or dispose pattern has been developed to formalize how to release unmanaged resources using the “IDisposable” interface.
+
+The pattern ensures that the resources will be released in all cases. Even though the “Dispose()” method is provided for a quick clean up, a user of the class might not call the method or forget to use the “using” block. In this case, the resources should be removed in the Finalizer (destructor).
+
+Now there are 2 places to try to remove the same resources and this can cause the problems.
+
+The Disposable Pattern is proposed to solve the following problems:
+
+After the “Dispose()” is called, the “Finalize()” should not release the same resources.
+The “Finalize()” method should not attempt to dispose of any managed objects, while the garbage collector can do so.
+A user can safely call the “Dispose()” method multiple times without error.
+ 
+public class MyResource : IDisposable
+{
+  // Has Dispose() already been called?
+  Boolean isDisposed = false;
+  // Implement IDisposable.
+  public void Dispose()
+  {
+    ReleaseResources(true); // cleans both unmanaged and managed resources
+    GC.SuppressFinalize(this); // supress finalization
+  }
+ 
+  protected void ReleaseResources(bool isFromDispose)
+  {
+    // Try to release resources only if they have not been previously released.
+    if (!isDisposed)
+    {
+      if (isFromDispose)
+      {
+        // TODO: Release managed resources here
+        // GC will automatically release Managed resources by calling the destructor,
+        // but Dispose() need to release managed resources manually
+      }
+      //TODO: Release unmanaged resources here
+    }
+    isDisposed = true; // Dispose() can be called numerous times
+  }
+  // Use C# destructor syntax for finalization code, invoked by GC only.
+  ~MyResource()
+  {
+    // cleans only unmanaged stuffs
+    ReleaseResources(false);
+  }
+}
