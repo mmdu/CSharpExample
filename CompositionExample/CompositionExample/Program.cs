@@ -12,6 +12,8 @@ namespace CompositionExample
             var dbMigrator = new DbMigrator(new Logger());
             var logger = new Logger();
             var installer = new Installer(logger);
+            installer.Install();
+            dbMigrator.Migrate();
         }
     }
 }
