@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DelegateExampleBox
 {
@@ -10,6 +11,7 @@ namespace DelegateExampleBox
             Type t = typeof(Action);
             Console.WriteLine(t.IsClass);
 
+            // Func Action Example 
             ProductFactory productFactory=new ProductFactory();
             ;
             WrapFactory wrapFactory = new WrapFactory();
@@ -29,8 +31,17 @@ namespace DelegateExampleBox
             Console.WriteLine(box2.Product.Name);
 
 
+            //  interface example 
+            IProductFactory pizzaFactory = new PizzaFactory();
+            IProductFactory toycarFactory =new ToyCarFactory();
+            WrapFactoryInterface wrapFactoryInterface = new WrapFactoryInterface();
+            Box box3 = wrapFactoryInterface.WrapProduct(pizzaFactory);
+            Box box4 = wrapFactoryInterface.WrapProduct(toycarFactory);
+            Console.WriteLine(box3.Product.Name);
+            Console.WriteLine(box4.Product.Name);
+
             //----------------------------------------------------------------------------------
-            // sample for multi delegate
+            // sample for multicast delegate
 
             Student stu1 = new Student() {ID = 1, PenColor = ConsoleColor.Blue};
             Student stu2 = new Student() { ID = 2, PenColor = ConsoleColor.Yellow };
@@ -46,6 +57,28 @@ namespace DelegateExampleBox
             action1 += action3;
             action1 += action4;
             action1();
+
+            // throw exception
+            //action1.BeginInvoke(null, null);
+            //action2.BeginInvoke(null, null);
+            //action3.BeginInvoke(null, null);
+            //action4.BeginInvoke(null, null);
+
+            Thread thread1 = new Thread(new ThreadStart(stu1.DoHomework));
+            Thread thread2 = new Thread(new ThreadStart(stu2.DoHomework));
+            Thread thread3 = new Thread(new ThreadStart(stu3.DoHomework));
+            thread1.Start();
+            thread2.Start();
+            thread3.Start();
+            Console.WriteLine("*******************************");
+
+            Task task1 = new Task(new Action(stu2.DoHomework));
+            Task task2 = new Task(new Action(stu3.DoHomework));
+            Task task3 = new Task(new Action(stu4.DoHomework));
+            Console.WriteLine("*******************************");
+            task1.Start();
+            task2.Start();
+            task3.Start();
 
 
         }
@@ -120,6 +153,47 @@ namespace DelegateExampleBox
                     Console.WriteLine("Student {0} doing homework {1} hours", this.ID,i);
                      Thread.Sleep(1000);
                 }
+            }
+        }
+        //============= using inteface===================
+        interface IProductFactory
+        {
+            Product Make();
+        }
+
+        class PizzaFactory : IProductFactory
+        {
+            public Product Make()
+            {
+                Product product = new Product();
+                product.Name = "pizza";
+                product.Price = 12;
+                return product;
+
+            }
+        }
+
+        class ToyCarFactory :IProductFactory
+        {
+            public Product Make()
+            {
+                Product product = new Product();
+                product.Name = "toycar";
+                product.Price = 80;
+                return product;
+
+            }
+        }
+
+        class WrapFactoryInterface
+        {
+            public Box WrapProduct(IProductFactory productFactory)
+            {
+                Box box = new Box();
+                Product product = productFactory.Make();
+               
+                box.Product = product;
+                return box;
             }
         }
     }
