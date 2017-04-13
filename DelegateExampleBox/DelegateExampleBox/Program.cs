@@ -82,6 +82,7 @@ namespace DelegateExampleBox
 
 
         }
+        //----------------------------------------------------------------------------------------------------------------------
         // no return value, action<>
         class  Logger
         {
@@ -155,7 +156,7 @@ namespace DelegateExampleBox
                 }
             }
         }
-        //============= using inteface===================
+        //============= using inteface=====================================================
         interface IProductFactory
         {
             Product Make();
