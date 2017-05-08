@@ -50,7 +50,7 @@ namespace InterfaceIComparableArraySort
 
             static void Main(string[] args)
             {
-                var myInt = new[] { 20, 4, 16, 9, 2 };
+               var myInt = new[] { 20, 4, 16, 9, 2 };
                 var myString = new[] {"aa", "ccccc", "dddddddd", "eeeeeeeeeeee", "bbb"};
                 MyClass[] mcArr = new MyClass[5];
                 for (int i = 0; i < 5; i++)
